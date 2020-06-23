@@ -1,0 +1,19 @@
+{
+  "name": "testland",
+  "version": "1.0.0",
+  "description": "the land where tests live",
+  "main": "preload.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  },
+  "keywords": [
+    "testland",
+    "ajcates"
+  ],
+  "author": "ajcates",
+  "license": "ISC"
+}
