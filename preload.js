@@ -8,22 +8,119 @@
   preload = {};
 
   //wether or not the preload will use the gloabal namespace.
-  useGlobal = false;
+  useGlobal = true;
+
+  preload.dumpVar = function(obj, max, sep, level) {
+    var error, i, result, t, tab;
+    level = level || 0;
+    max = max || 10;
+    sep = sep || ' ';
+    if (level > max) {
+      return '[WARNING: Too much recursion]\n';
+    }
+    i = void 0;
+    result = '';
+    tab = '';
+    t = typeof obj;
+    if (obj === null) {
+      result += '(null)\n';
+    } else if (t === 'object') {
+      level++;
+      i = 0;
+      while (i < level) {
+        tab += sep;
+        i++;
+      }
+      if (obj && obj.length) {
+        t = 'array';
+      }
+      result += '(' + t + ') :\n';
+      for (i in obj) {
+        i = i;
+        try {
+          result += tab + '[' + i + '] : ' + preload.dumpVar(obj[i], max, sep, level + 1);
+        } catch (error1) {
+          error = error1;
+          return '[ERROR: ' + error + ']\n';
+        }
+      }
+    } else {
+      if (t === 'string') {
+        if (obj === '') {
+          obj = '(empty)';
+        }
+      }
+      result += '(' + t + ') ' + obj + '\n';
+    }
+    return result;
+  };
 
   // External libraries
   //--------------------
 
   // Install underscore into `_` in the preload
-  preload._ = require('./underscore');
+  preload._ = require('underscore');
 
   // The REPL uses `_` for the last result so create
   // a synonym for `_` to help resolve conflicts.
   preload.underscore = preload._;
 
   // Install coffeekup in the kup namespace
-  preload.kup = require('./coffeekup');
+  preload.kup = require('coffeekup');
 
-  // See comment at definition of useGlobal                                                        
+  preload.l = console.log;
+
+  preload.info = console.info;
+
+  
+  // Test if a file exists
+  preload.fileExists = function(filename) {
+    var error;
+    try {
+      return (require('fs')).statSync(filename).isFile();
+    } catch (error1) {
+      error = error1;
+      return false;
+    }
+  };
+
+  // Return contents of filename as UTF-8 text
+  preload.readTextFile = function(filename) {
+    return require('fs').readFileSync(filename, 'utf8');
+  };
+
+  preload.serveIt = function(content, port = 8000) {
+    preload.server = (require('http')).createServer(function(req, res) {
+      if (req.method === 'GET') {
+        if (req.url === '/') {
+          res.writeHead(200, {
+            'Content-Type': 'text/html'
+          });
+          res.write(content);
+          res.end();
+          return;
+        }
+        res.writeHead(404, {
+          'Content-Type': 'text/html'
+        });
+        res.write('404 Not found');
+        return res.end();
+      }
+    });
+    preload.server.listen(port);
+    return preload.info('Server running at http://' + preload.server.address().address + ':' + port);
+  };
+
+  preload.globalize = function(ns, target = global) {
+    var name, results;
+    results = [];
+    for (name in ns) {
+      results.push(target[name] = ns[name]);
+    }
+    return results;
+  };
+
+  // See comment at definition of useGlobal                           
   namespace = global;
 
   if (useGlobal) {
